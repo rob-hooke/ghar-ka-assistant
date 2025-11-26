@@ -1,0 +1,48 @@
+# .gitignore for Home Assistant
+
+# Home Assistant database and secrets
+config/home-assistant_v2.db*
+config/home-assistant.log*
+config/secrets.yaml
+config/.storage/
+config/deps/
+config/.cloud/
+config/.google.token
+
+# Python cache
+config/__pycache__/
+config/*.pyc
+
+# Backup files
+config/backups/
+*.backup
+
+# SSL certificates
+config/*.pem
+config/*.key
+
+# Custom components cache
+config/custom_components/**/__pycache__/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment variables (keep .env.example if you create one)
+.env
+.env.local
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Logs
+*.log
+npm-debug.log*

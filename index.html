@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Philips Hue Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .bulb-status {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .bulb-icon {
+            font-size: 80px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .bulb-icon.on {
+            filter: drop-shadow(0 0 20px #ffd700);
+        }
+
+        .status-text {
+            font-size: 18px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-on {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-on:hover {
+            background: #45a049;
+        }
+
+        .btn-off {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-off:hover {
+            background: #da190b;
+        }
+
+        .message {
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💡 Hue Bulb Control</h1>
+
+        <div class="bulb-status">
+            <div class="bulb-icon" id="bulbIcon">💡</div>
+            <div class="status-text" id="statusText">Loading...</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-on" id="btnOn" onclick="controlBulb(true)">Turn On</button>
+            <button class="btn-off" id="btnOff" onclick="controlBulb(false)">Turn Off</button>
+        </div>
+
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        // Get initial bulb status on page load
+        async function getBulbStatus() {
+            try {
+                const response = await fetch(`${API_URL}/status`);
+                const data = await response.json();
+
+                if (data.success) {
+                    updateUI(data.isOn);
+                } else {
+                    showMessage('Error getting bulb status', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Could not connect to server', 'error');
+            }
+        }
+
+        // Control the bulb (on/off)
+        async function controlBulb(turnOn) {
+            const container = document.querySelector('.container');
+            container.classList.add('loading');
+
+            try {
+                const response = await fetch(`${API_URL}/control`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ on: turnOn })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    updateUI(turnOn);
+                    showMessage(`Bulb turned ${turnOn ? 'ON' : 'OFF'}`, 'success');
+                } else {
+                    showMessage(data.error || 'Failed to control bulb', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Could not connect to server', 'error');
+            } finally {
+                container.classList.remove('loading');
+            }
+        }
+
+        // Update UI based on bulb state
+        function updateUI(isOn) {
+            const bulbIcon = document.getElementById('bulbIcon');
+            const statusText = document.getElementById('statusText');
+
+            if (isOn) {
+                bulbIcon.classList.add('on');
+                statusText.textContent = 'Bulb is ON';
+                statusText.style.color = '#4CAF50';
+            } else {
+                bulbIcon.classList.remove('on');
+                statusText.textContent = 'Bulb is OFF';
+                statusText.style.color = '#666';
+            }
+        }
+
+        // Show message to user
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 3000);
+        }
+
+        // Load bulb status on page load
+        getBulbStatus();
+
+        // Refresh status every 5 seconds
+        setInterval(getBulbStatus, 5000);
+    </script>
+</body>
+</html>
