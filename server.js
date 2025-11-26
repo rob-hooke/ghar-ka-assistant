@@ -1,7 +1,9 @@
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
+import axios from 'axios';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -117,10 +119,10 @@ app.get('/health', (req, res) => {
 });
 
 // Export app for testing
-module.exports = app;
+export default app;
 
 // Only start server if run directly (not imported for tests)
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`📡 Connected to Hue Bridge at ${HUE_BRIDGE_IP}`);

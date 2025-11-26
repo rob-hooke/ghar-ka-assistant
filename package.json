@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Simple web interface to control Philips Hue bulbs",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",

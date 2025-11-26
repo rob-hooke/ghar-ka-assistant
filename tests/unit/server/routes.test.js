@@ -1,31 +1,44 @@
-import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, vi, beforeEach } from 'vitest';
 import request from 'supertest';
+import axios from 'axios';
 
-// Mock axios before importing server
-vi.mock('axios', async () => {
-  const actual = await vi.importActual('axios');
-  return {
-    default: {
-      ...actual.default,
-      get: vi.fn().mockResolvedValue({
-        data: {
-          state: { on: true, bri: 254, reachable: true },
-          name: 'Living Room 1',
-        },
-      }),
-      put: vi.fn().mockResolvedValue({
-        data: [{ success: { '/lights/1/state/on': true } }],
-      }),
-    },
-  };
-});
+// Mock axios module
+vi.mock('axios');
 
 describe('API Routes - Unit Tests', () => {
   let app;
 
   beforeAll(async () => {
+    // Set up default mocks
+    axios.get = vi.fn().mockResolvedValue({
+      data: {
+        state: { on: true, bri: 254, reachable: true },
+        name: 'Living Room 1',
+      },
+    });
+
+    axios.put = vi.fn().mockResolvedValue({
+      data: [{ success: { '/lights/1/state/on': true } }],
+    });
+
     const module = await import('../../../server.js');
     app = module.default;
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Reset mocks to default values
+    axios.get.mockResolvedValue({
+      data: {
+        state: { on: true, bri: 254, reachable: true },
+        name: 'Living Room 1',
+      },
+    });
+
+    axios.put.mockResolvedValue({
+      data: [{ success: { '/lights/1/state/on': true } }],
+    });
   });
 
   describe('GET /health', () => {
