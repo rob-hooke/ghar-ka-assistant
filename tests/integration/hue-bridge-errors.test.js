@@ -17,15 +17,23 @@ describe('Hue Bridge Error Scenarios', () => {
     app = module.default;
   });
 
-  it('should handle timeout on status request', async () => {
-    const response = await request(app).get('/status');
+  it('should handle timeout on lights list request', async () => {
+    const response = await request(app).get('/lights');
     expect(response.status).toBe(500);
     expect(response.body.success).toBe(false);
+    expect(response.body.error).toBe('Failed to get lights');
   });
 
-  it('should handle timeout on control request', async () => {
-    const response = await request(app).post('/control').send({ on: true });
+  it('should handle timeout on light control request', async () => {
+    const response = await request(app).post('/lights/1/control').send({ on: true });
     expect(response.status).toBe(500);
     expect(response.body.success).toBe(false);
+    expect(response.body.error).toBe('Failed to control light');
+  });
+
+  it('should still respond to health check during bridge timeout', async () => {
+    const response = await request(app).get('/health');
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('ok');
   });
 });
