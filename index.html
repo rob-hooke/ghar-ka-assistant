@@ -222,7 +222,8 @@
         const grid = document.getElementById('lightsGrid');
 
         if (lights.length === 0) {
-          grid.innerHTML = '<div class="no-lights-message">No lights found on your Hue Bridge</div>';
+          grid.innerHTML =
+            '<div class="no-lights-message">No lights found on your Hue Bridge</div>';
           return;
         }
 
