@@ -1,4 +1,4 @@
-// Mock Hue Bridge API responses
+// Mock Hue Bridge API responses for individual light data
 export const mockLightStatus = {
   state: {
     on: true,
@@ -16,10 +16,25 @@ export const mockLightStatusOff = {
   state: { ...mockLightStatus.state, on: false },
 };
 
+// Mock response for GET /lights (multiple lights with varied states)
 export const mockAllLights = {
   1: mockLightStatus,
-  2: { ...mockLightStatus, name: 'Bedroom' },
+  2: {
+    ...mockLightStatus,
+    name: 'Bedroom',
+    state: { ...mockLightStatus.state, on: false },
+  },
+  3: {
+    ...mockLightStatus,
+    name: 'Kitchen',
+    state: { ...mockLightStatus.state, reachable: false },
+  },
 };
+
+// Helper to create control success response for any light ID
+export const mockControlSuccessForLight = (lightId, state) => [
+  { success: { [`/lights/${lightId}/state/on`]: state } },
+];
 
 export const mockControlSuccess = [{ success: { '/lights/1/state/on': true } }];
 
