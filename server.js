@@ -2,8 +2,36 @@ import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import winston from 'winston';
+import DailyRotateFile from 'winston-daily-rotate-file';
 
 dotenv.config();
+
+// Configure Winston logger
+const logTransports = [new winston.transports.Console()];
+
+// Only add file logging if not in test mode
+if (!process.env.TEST_MODE && process.env.NODE_ENV !== 'test') {
+  logTransports.push(
+    new DailyRotateFile({
+      filename: process.env.LOG_FILE || './logs/hue-control-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
+      maxSize: '10m',
+      maxFiles: '5',
+    })
+  );
+}
+
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: winston.format.combine(
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    winston.format.printf(({ timestamp, level, message }) => {
+      return `${timestamp} [${level.toUpperCase()}] ${message}`;
+    })
+  ),
+  transports: logTransports,
+});
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -45,11 +73,13 @@ app.get('/lights', async (req, res) => {
       type: light.type,
     }));
 
+    logger.info(`Fetched ${lights.length} lights from Hue Bridge`);
     res.json({
       success: true,
       lights,
     });
   } catch (error) {
+    logger.error(`Error fetching lights: ${error.message}`);
     console.error('Error getting lights:', error.message);
     res.status(500).json({
       success: false,
@@ -61,8 +91,8 @@ app.get('/lights', async (req, res) => {
 
 // Route to control a specific light by ID (on/off and brightness)
 app.post('/lights/:id/control', async (req, res) => {
+  const { id } = req.params;
   try {
-    const { id } = req.params;
     const { on, bri } = req.body;
 
     // Build state object for Hue API
@@ -136,8 +166,12 @@ app.post('/lights/:id/control', async (req, res) => {
     }
     responseData.message = `Light ${id} ${changes.join(', ')}`;
 
+    // Log the command
+    logger.info(`Light ${id} - ${responseData.message}`);
+
     res.json(responseData);
   } catch (error) {
+    logger.error(`Failed to control light ${id}: ${error.message}`);
     console.error('Error controlling light:', error.message);
     res.status(500).json({
       success: false,
@@ -161,6 +195,8 @@ export default app;
 // Only start server if run directly (not imported for tests)
 if (import.meta.url === `file://${process.argv[1]}`) {
   app.listen(PORT, () => {
+    logger.info(`Server started on port ${PORT}`);
+    logger.info(`Connected to Hue Bridge at ${HUE_BRIDGE_IP}`);
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`📡 Connected to Hue Bridge at ${HUE_BRIDGE_IP}`);
     console.log(`\nOpen http://localhost:${PORT} in your browser to control your lights`);
