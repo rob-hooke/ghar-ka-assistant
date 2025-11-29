@@ -43,5 +43,13 @@ Thumbs.db
 node_modules/
 
 # Logs
+logs/
 *.log
 npm-debug.log*
+
+# Docker environment files
+.env.production
+docker-compose.override.yml
+
+# Docker-related
+Dockerfile.dev
