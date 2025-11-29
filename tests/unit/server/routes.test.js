@@ -177,5 +177,84 @@ describe('API Routes - Unit Tests', () => {
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to control light');
     });
+
+    it('should set brightness and auto-turn on light', async () => {
+      axios.put.mockResolvedValueOnce({
+        data: [
+          { success: { '/lights/1/state/bri': 127 } },
+          { success: { '/lights/1/state/on': true } },
+        ],
+      });
+
+      const response = await request(app).post('/lights/1/control').send({ bri: 127 });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.brightness).toBe(127);
+      expect(response.body.message).toContain('brightness set to 127');
+    });
+
+    it('should set brightness and on state together', async () => {
+      axios.put.mockResolvedValueOnce({
+        data: [
+          { success: { '/lights/1/state/on': true } },
+          { success: { '/lights/1/state/bri': 200 } },
+        ],
+      });
+
+      const response = await request(app).post('/lights/2/control').send({ on: true, bri: 200 });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.isOn).toBe(true);
+      expect(response.body.brightness).toBe(200);
+    });
+
+    it('should validate brightness range - reject below minimum', async () => {
+      const response = await request(app).post('/lights/1/control').send({ bri: 0 });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('must be a number between 1 and 254');
+    });
+
+    it('should validate brightness range - reject above maximum', async () => {
+      const response = await request(app).post('/lights/1/control').send({ bri: 255 });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('must be a number between 1 and 254');
+    });
+
+    it('should validate brightness type - reject string', async () => {
+      const response = await request(app).post('/lights/1/control').send({ bri: '100' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('must be a number');
+    });
+
+    it('should require at least one parameter', async () => {
+      const response = await request(app).post('/lights/1/control').send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('must provide "on" or "bri" parameter');
+    });
+
+    it('should not auto-turn on when explicitly setting on=false with brightness', async () => {
+      axios.put.mockResolvedValueOnce({
+        data: [
+          { success: { '/lights/1/state/on': false } },
+          { success: { '/lights/1/state/bri': 100 } },
+        ],
+      });
+
+      const response = await request(app).post('/lights/1/control').send({ on: false, bri: 100 });
+
+      expect(response.status).toBe(200);
+      expect(response.body.isOn).toBe(false);
+      expect(response.body.brightness).toBe(100);
+    });
   });
 });

@@ -59,21 +59,50 @@ app.get('/lights', async (req, res) => {
   }
 });
 
-// Route to control a specific light by ID (on/off)
+// Route to control a specific light by ID (on/off and brightness)
 app.post('/lights/:id/control', async (req, res) => {
   try {
     const { id } = req.params;
-    const { on } = req.body;
+    const { on, bri } = req.body;
 
-    // Validate that 'on' is a boolean
-    if (typeof on !== 'boolean') {
+    // Build state object for Hue API
+    const state = {};
+
+    // Validate and add 'on' parameter if provided
+    if (on !== undefined) {
+      if (typeof on !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid request: "on" must be a boolean',
+        });
+      }
+      state.on = on;
+    }
+
+    // Validate and add 'bri' (brightness) parameter if provided
+    if (bri !== undefined) {
+      if (typeof bri !== 'number' || bri < 1 || bri > 254) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid request: "bri" must be a number between 1 and 254',
+        });
+      }
+      state.bri = bri;
+      // Auto-turn on light when setting brightness (unless explicitly turning off)
+      if (on !== false) {
+        state.on = true;
+      }
+    }
+
+    // Require at least one parameter
+    if (Object.keys(state).length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid request: "on" must be a boolean',
+        error: 'Invalid request: must provide "on" or "bri" parameter',
       });
     }
 
-    const response = await axios.put(`${HUE_API_BASE}/lights/${id}/state`, { on });
+    const response = await axios.put(`${HUE_API_BASE}/lights/${id}/state`, state);
 
     // Check if the Hue bridge returned any errors
     if (response.data[0] && response.data[0].error) {
@@ -83,12 +112,31 @@ app.post('/lights/:id/control', async (req, res) => {
       });
     }
 
-    res.json({
+    // Build response with current state
+    const responseData = {
       success: true,
       lightId: id,
-      isOn: on,
-      message: `Light ${id} turned ${on ? 'on' : 'off'}`,
-    });
+    };
+
+    if (state.on !== undefined) {
+      responseData.isOn = state.on;
+    }
+
+    if (state.bri !== undefined) {
+      responseData.brightness = state.bri;
+    }
+
+    // Create message
+    const changes = [];
+    if (state.on !== undefined) {
+      changes.push(`turned ${state.on ? 'on' : 'off'}`);
+    }
+    if (state.bri !== undefined) {
+      changes.push(`brightness set to ${state.bri}`);
+    }
+    responseData.message = `Light ${id} ${changes.join(', ')}`;
+
+    res.json(responseData);
   } catch (error) {
     console.error('Error controlling light:', error.message);
     res.status(500).json({

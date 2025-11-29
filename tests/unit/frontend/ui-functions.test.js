@@ -106,5 +106,33 @@ describe('Frontend UI - Lights Grid', () => {
       // Check that fetchAllLights is called at the end (not in setInterval)
       expect(script.textContent).toMatch(/fetchAllLights\(\);[\s\S]*setInterval/);
     });
+
+    it('should have setBrightness function in script', () => {
+      const script = document.querySelector('script');
+      expect(script.textContent).toContain('setBrightness');
+    });
+  });
+
+  describe('Brightness Controls', () => {
+    it('should have brightness-control styles defined', () => {
+      const styles = document.querySelector('style');
+      expect(styles.textContent).toContain('.brightness-control');
+    });
+
+    it('should have brightness-slider styles defined', () => {
+      const styles = document.querySelector('style');
+      expect(styles.textContent).toContain('.brightness-slider');
+    });
+
+    it('should have brightness-label styles defined', () => {
+      const styles = document.querySelector('style');
+      expect(styles.textContent).toContain('.brightness-label');
+    });
+
+    it('should include brightness conversion logic in script', () => {
+      const script = document.querySelector('script');
+      // Check for brightness conversion: 254 (Hue max) appears in script
+      expect(script.textContent).toContain('254');
+    });
   });
 });
