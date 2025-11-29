@@ -95,4 +95,33 @@ describe('End-to-End - Multi-Light Control Flow', () => {
     expect(invalid.status).toBe(400);
     expect(invalid.body.success).toBe(false);
   });
+
+  it('should control light brightness', async () => {
+    // Set brightness on a light
+    axios.put.mockResolvedValueOnce({
+      data: [
+        { success: { '/lights/1/state/bri': 127 } },
+        { success: { '/lights/1/state/on': true } },
+      ],
+    });
+
+    const setBrightness = await request(app).post('/lights/1/control').send({ bri: 127 });
+    expect(setBrightness.status).toBe(200);
+    expect(setBrightness.body.success).toBe(true);
+    expect(setBrightness.body.brightness).toBe(127);
+
+    // Set brightness and turn on together
+    axios.put.mockResolvedValueOnce({
+      data: [
+        { success: { '/lights/2/state/on': true } },
+        { success: { '/lights/2/state/bri': 200 } },
+      ],
+    });
+
+    const setBoth = await request(app).post('/lights/2/control').send({ on: true, bri: 200 });
+    expect(setBoth.status).toBe(200);
+    expect(setBoth.body.success).toBe(true);
+    expect(setBoth.body.isOn).toBe(true);
+    expect(setBoth.body.brightness).toBe(200);
+  });
 });

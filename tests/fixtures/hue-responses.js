@@ -38,6 +38,17 @@ export const mockControlSuccessForLight = (lightId, state) => [
 
 export const mockControlSuccess = [{ success: { '/lights/1/state/on': true } }];
 
+// Brightness control success responses
+export const mockBrightnessSuccess = [
+  { success: { '/lights/1/state/bri': 127 } },
+  { success: { '/lights/1/state/on': true } },
+];
+
+export const mockBrightnessAndOnSuccess = [
+  { success: { '/lights/1/state/on': true } },
+  { success: { '/lights/1/state/bri': 200 } },
+];
+
 export const mockControlError = [
   {
     error: {
