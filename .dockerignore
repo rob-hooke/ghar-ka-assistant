@@ -33,6 +33,3 @@ coverage
 logs
 *.log
 npm-debug.log*
-
-# Lock file (npm ci will generate its own)
-package-lock.json
