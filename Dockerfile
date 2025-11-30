@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm ci --only=production
+# Install production dependencies only (skip prepare script to avoid husky)
+RUN npm ci --only=production --ignore-scripts
 
 # Copy application files
 COPY server.js index.html ./
