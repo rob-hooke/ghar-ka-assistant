@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  hue-control:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hue-control
+    hostname: hue-control
+    ports:
+      - "3000:3000"
+    environment:
+      - HUE_BRIDGE_IP=${HUE_BRIDGE_IP}
+      - HUE_USERNAME=${HUE_USERNAME}
+      - PORT=3000
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - LOG_FILE=/app/logs/hue-control.log
+    volumes:
+      # Persist logs on host machine
+      - ./logs:/app/logs
+      # Mount .env file as read-only
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
+    networks:
+      - hue-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+networks:
+  hue-network:
+    driver: bridge

@@ -1,0 +1,38 @@
+# Node modules (will be installed in container)
+node_modules
+
+# Development files
+.git
+.gitignore
+.github
+.husky
+.vscode
+.DS_Store
+
+# Documentation
+README.md
+TESTING.md
+*.md
+
+# Environment files (will be mounted at runtime)
+.env
+.env.*
+
+# Test files
+tests
+*.test.js
+vitest.config.js
+coverage
+
+# Linting/formatting
+.eslintrc.cjs
+.prettierrc.cjs
+.prettierignore
+
+# Logs (will be mounted as volume)
+logs
+*.log
+npm-debug.log*
+
+# Lock file (npm ci will generate its own)
+package-lock.json
